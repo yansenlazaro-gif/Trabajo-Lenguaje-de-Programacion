@@ -1,0 +1,40 @@
+import java_cup.runtime.*;
+
+parser code {:
+    // Se ejecuta cuando CUP detecta un token que no encaja en la gramática
+    public void syntax_error(Symbol s) {
+        System.out.println("  -> Error de sintaxis en la línea " + (s.left + 1)
+                           + ", posición " + s.right);
+    }
+    // Se silencia el mensaje genérico en inglés de CUP
+    public void report_error(String message, Object info) { }
+:};
+
+/* ---------- Terminales (los tokens que entrega JLex) ---------- */
+terminal PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN;
+terminal String NUMERO, ID;
+
+/* ---------- No terminales (cada uno devuelve el AST como texto) ---------- */
+non terminal String programa, expr, term, factor;
+
+start with programa;
+
+/* ---------- Reglas de la gramática ---------- */
+programa ::= expr:e
+             {: System.out.println("  -> Expresión VÁLIDA. AST: " + e); :}
+          ;
+
+expr ::= expr:e PLUS  term:t   {: RESULT = "(+ " + e + " " + t + ")"; :}
+       | expr:e MINUS term:t   {: RESULT = "(- " + e + " " + t + ")"; :}
+       | term:t                {: RESULT = t; :}
+       ;
+
+term ::= term:t TIMES  factor:f {: RESULT = "(* " + t + " " + f + ")"; :}
+       | term:t DIVIDE factor:f {: RESULT = "(/ " + t + " " + f + ")"; :}
+       | factor:f               {: RESULT = f; :}
+       ;
+
+factor ::= LPAREN expr:e RPAREN {: RESULT = e; :}
+         | NUMERO:n             {: RESULT = n; :}
+         | ID:i                 {: RESULT = i; :}
+         ;
